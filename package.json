@@ -1,6 +1,6 @@
 {
   "name": "htsl-foundation-6-lexicon",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Foundation 6 for HTSL",
   "main": "dist/bundles/index.js",
   "module": "dist/bundles/index.mjs",
