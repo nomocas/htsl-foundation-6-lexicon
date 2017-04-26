@@ -16,7 +16,8 @@
     "test": "mocha",
     "karma": "karma start",
     "cover": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text mocha test/*.js",
-    "prepublish": "npm test"
+    "prepublish": "npm test",
+    "release": "standard-version"
   },
   "nyc": {
     "require": [
