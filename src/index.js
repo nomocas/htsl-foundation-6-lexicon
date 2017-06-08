@@ -36,8 +36,7 @@ export default foundation
 
 			tooltip(title, text, opt) {
 				opt = opt || {};
-				return this.span(
-					h.class('has-tip')
+				return this.class('has-tip')
 					.if(opt.top, h.class('top'))
 					.data('tooltip')
 					.if(opt.noClickOpen, h.data('clickOpen', false))
@@ -47,10 +46,9 @@ export default foundation
 					.attr('title', title)
 					.onDom((node) => {
 						new Foundation.Tooltip($(node), {}); // eslint-disable-line no-undef
-					}),
-					text
-				);
+					});
 			},
+
 			// breadcrumb: function(label, elements) {
 			// 	return this
 			// 		.nav(h.attr('aria-label', label)
