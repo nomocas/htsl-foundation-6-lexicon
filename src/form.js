@@ -2,7 +2,7 @@
  * @Author: Gilles Coomans
  * @Date:   2017-03-22 15:09:40
  * @Last Modified by:   Gilles Coomans
- * @Last Modified time: 2017-03-22 16:31:12
+ * @Last Modified time: 2017-07-08 14:22:50
  */
 import foundation from './lexicon';
 import './buttons';
@@ -85,7 +85,7 @@ foundation
 					)
 				);
 			},
-			inputField(opts) {
+			inputField(opts, errors) {
 				return this.div(
 					h.class('input-field')
 					.if(opts.icon,
@@ -94,16 +94,16 @@ foundation
 							.icon(opts.icon)
 						)
 					)
-					.input(opts.type || 'text', (typeof opts.val !== 'undefined') ? opts.val : '{{ ' + opts.path + ' }}',
+					.input(opts.type || 'text', (typeof opts.val !== 'undefined') ? opts.val : '',
 						h.attr('id', opts.id)
 						.attr('placeholder', opts.placeholder)
 						.attr('required', opts.required)
 						.if(opts.icon, h.class('labeled'))
 					)
 					.div(
-						h.visible('{{ $error.' + opts.path + ' }}')
+						h.visible(errors)
 						.class('formfield-error')
-						.text('{{ $error.' + opts.path + '.detail }}')
+						.text(errors && errors.detail)
 					)
 				);
 			},

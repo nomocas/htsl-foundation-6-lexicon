@@ -9,7 +9,9 @@ import './dropdown';
 import './form';
 import './overlay-panel';
 import './images';
+import './side-panel';
 import './dialogs-and-callouts';
+import './image-upload-form-button';
 
 export default foundation
 	.addCompounds((h) => {
@@ -34,18 +36,23 @@ export default foundation
 			 * HELPERS
 			 */
 
-			tooltip(title, text, opt) {
+			tooltip(title, opt) {
 				opt = opt || {};
+				let tooltip;
 				return this.class('has-tip')
 					.if(opt.top, h.class('top'))
 					.data('tooltip')
-					.if(opt.noClickOpen, h.data('clickOpen', false))
+					.attr('role', 'tooltip')
+					.data('clickOpen', !opt.noClickOpen)
 					.attr('aria-haspopup', true)
-					.data('disableHover', false)
-					.attr('tabindex', '1')
+					.data('disableHover', !!opt.disableHover)
 					.attr('title', title)
+					// .data('hoverDelay', opt.hoverDelay || 0)
 					.onDom((node) => {
-						new Foundation.Tooltip($(node), {}); // eslint-disable-line no-undef
+						tooltip = new Foundation.Tooltip($(node), opt);
+					}, null, () => {
+						if (tooltip && tooltip.$element)
+							tooltip.destroy();
 					});
 			},
 
@@ -175,14 +182,14 @@ export default foundation
 	.addCompounds(() => {
 		const coloredAPI = {};
 		foundation.colorLabels
-		.forEach((color) => {
-			coloredAPI[color + 'Badge'] = function(text) {
-				return this.badge(text, color);
-			};
-			coloredAPI[color + 'Label'] = function(text) {
-				return this.coloredLabel(text, color);
-			};
-		});
+			.forEach((color) => {
+				coloredAPI[color + 'Badge'] = function(text) {
+					return this.badge(text, color);
+				};
+				coloredAPI[color + 'Label'] = function(text) {
+					return this.coloredLabel(text, color);
+				};
+			});
 		return coloredAPI;
 	});
 

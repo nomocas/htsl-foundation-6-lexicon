@@ -4,15 +4,54 @@
 
 import Component from 'htsl-component';
 import foundation from './lexicon';
+import anime from 'animejs';
 
 /**
  * Abstract Component for full screen panel with background
  * @abstract
  */
 const OverlayPanel = Component.extends(Component, {
+	hide() {
+		// this.setState({ opened: false });
+		const targets = [];
+		if (this.panelBackground)
+			targets.push(this.panelBackground);
+		if (this.innerPanel)
+			targets.push(this.innerPanel);
+		if (!targets.length)
+			this.unmount();
+		else
+			anime({
+				targets,
+				opacity: 0,
+				easing: 'easeInOutQuart',
+				duration: this.props.opt.delay || 400,
+				complete: () => {
+					this.unmount();
+				}
+			});
+	},
+	show() {
+		// this.setState({ opened: true });
+		anime({
+			targets: [this.panelBackground, this.innerPanel],
+			opacity: 1,
+			easing: 'easeInOutQuart',
+			duration: this.props.opt.delay || 400,
+			complete: () => {
+				console.log('panel shown'); // eslint-disable-line
+			}
+		});
+	},
+	componentDidMount() {
+		this.show();
+	},
+	componentWillReceiveProps() {
+		this.show();
+	},
 	render(firstLevel) {
 		const h = foundation.initializer(firstLevel);
-		return h.overlayPanel(this.props.opt, this.content(firstLevel), this);
+		return h.overlayPanel(this.props, this.state, this.renderPanel(firstLevel), this);
 	}
 });
 
@@ -22,19 +61,23 @@ const OverlayPanel = Component.extends(Component, {
 const ConfirmPanel = Component.extends(OverlayPanel, {
 	validate(e) {
 		e.preventDefault();
-		this.unmount();
+		this.hide();
 		this.state.callback(true);
 	},
+
 	cancel(e) {
 		e.preventDefault();
-		this.unmount();
+		this.hide();
 		this.state.callback(false);
 	},
-	content(firstLevel) {
+	renderPanel(firstLevel) {
 		const h = foundation.initializer(firstLevel);
-		return h.class('confirm-panel')
+		return h
+			.class('confirm-panel')
 			.warningDialog(
 				h.h3(this.state.title)
+				.style('opacity', 0)
+				.ref('innerPanel')
 				.p(this.state.message)
 				.div(
 					h.class('dialog-buttons-container')
@@ -49,17 +92,19 @@ const ConfirmPanel = Component.extends(OverlayPanel, {
  * Full screen Alert Panel Component with background
  */
 const AlertPanel = Component.extends(OverlayPanel, {
-	content(firstLevel) {
+	renderPanel(firstLevel) {
 		const h = foundation.initializer(firstLevel);
 		return h.class('alert-panel')
 			.alertDialog(
 				h.h3(this.state.title)
+				.style('opacity', 0)
+				.ref('innerPanel')
 				.p(this.state.message)
 				.div(
 					h.class('dialog-buttons-container')
-					.alertButton(h.click(this.unmount), '\u2713')
+					.alertButton(h.click(this.hide), '\u2713')
 				),
-				h.click(this.unmount)
+				h.click(this.hide)
 			);
 	}
 });
@@ -68,45 +113,22 @@ const AlertPanel = Component.extends(OverlayPanel, {
  * Full screen Modal Component with background
  */
 const UikitModal = Component.extends(OverlayPanel, {
-	content(firstLevel) {
-		const h = foundation.initializer(firstLevel);
-		return h.class('uik-modal')
+	renderPanel(firstLevel) {
+		const h = foundation.initializer(firstLevel),
+			subcontent = this.props.content || this.content(firstLevel);
+
+		return h
+			.class('uik-modal')
 			.div(
 				h.class('modal-panel')
+				.style('opacity', 0)
+				.ref('innerPanel')
 				.div(
 					h.class('modal-panel-content'),
-					typeof this.props.content === 'function' ? this.props.content(this.state, this.props, this) : this.props.content
+					typeof subcontent === 'function' ? subcontent(this.state, this.props, this) : subcontent
 				)
-				.closeButton(h.click(this.unmount))
-			);
-	}
-});
-
-/**
- * Side Panel Component with background
- * opt: {
- * 		side: 'left' || 'right',
- * 		width: '100px', 
- * 		height: '100px' 
- * }
- */
-const SidePanel = Component.extends(OverlayPanel, {
-	content(firstLevel) {
-		const h = foundation.initializer(firstLevel),
-			opt = this.props.opt;
-		return h
-			.div(
-				h.class('side-panel')
-				.class('side-panel--' + opt.side)
-				.div(
-					h.class('side-panel-content')
-					.if(opt.side === 'left' || opt.side === 'right',
-						h.style('width', opt.width),
-						h.style('height', opt.height)
-					),
-					typeof this.props.content === 'function' ? this.props.content(this.state, this.props, this) : this.props.content
-				)
-				.closeButton(h.click(this.unmount))
+				.closeButton(h.click(this.hide)),
+				this.props.template
 			);
 	}
 });
@@ -122,20 +144,24 @@ foundation.addCompounds((h) => {
 		 * @param  {[type]} ctrl [description]
 		 * @return {[type]}      [description]
 		 */
-		overlayPanel(opt, content, ctrl) {
+		overlayPanel(props, state, content, ctrl) {
 			return h.div(
 				h.class('overlay-panel')
-				.if(opt.panelClass, h.class(opt.panelClass))
-				.if(!opt.noBackground, h.overlayPanelBackground(opt.closeOnBackgroundClick, ctrl)),
+				.class('opened', !!state.opened)
+				.ref('panel')
+				.if(props.opt.panelClass, h.class(props.opt.panelClass))
+				.if(!props.opt.noBackground, h.overlayPanelBackground(props.opt.closeOnBackgroundClick, ctrl)),
 				content
 			);
 		},
 		overlayPanelBackground(closeOnBackgroundClick, ctrl) {
 			return this.div(
 				h.class('overlay-panel-background')
+				.ref('panelBackground')
+				.style('opacity', 0)
 				.if(closeOnBackgroundClick, h.click((e) => {
 					if (e.target === e.currentTarget)
-						ctrl.unmount();
+						ctrl.hide();
 				}))
 			);
 		},
@@ -152,12 +178,18 @@ foundation.addCompounds((h) => {
 				}
 			});
 		},
-		postalUikitModal(channel, opt, content) {
-			return this.postalComponent(channel, UikitModal, { content, opt });
-		},
-		postalSidePanel(channel, opt, content) {
-			return this.postalComponent(channel, SidePanel, { opt, content });
+		postalUikitModal(channel, opt, content, template = undefined) {
+			return this.postalComponent(channel, UikitModal, { content, opt, template });
 		}
 	};
 });
+
+Object.assign(foundation.components, {
+	OverlayPanel,
+	UikitModal,
+	ConfirmPanel,
+	AlertPanel
+});
+
+export default OverlayPanel;
 
